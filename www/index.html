@@ -119,6 +119,7 @@
                                     }
                                     else{//no existe en la BD externa
                                         ///document.querySelector('#myNavigator').pushPage('nuevo.html');
+                                        ons.notification.alert("OPS! No estas registrado.");
                                         nuevoUsuario();
                                         }
 
@@ -142,14 +143,17 @@
               tel = document.getElementById("inn-telefono").value;
               pass = document.getElementById("inn-password").value;
 
+
+              if(pass == "" || nomb == "" || cod == "" || plac == "" || tel == "" || tel.lenght < 10 || cod == "undefined")
+              {
+                ons.notification.alert("Te faltan algunos datos");
+                return;
+              }
               if(tel < 1000000000 || tel >= 9999999999){
                 ons.notification.alert("telefono invalido");
                 return;
               }
-              if(pass == "" || nomb == "" || cod == "" || plac == "" || tel == "" || tel.lenght < 10 || cod == "undefined")
-              {
-                ons.notification.alert("Error de entrada");
-              }else{
+              else{
                 var xhttp = new XMLHttpRequest();
                 xhttp.onreadystatechange = function(){
                 if(xhttp.readyState == 4 && this.status == 200){
@@ -346,7 +350,6 @@
 
         <template id="mapa.html">
             <ons-page id="page3">
-
                   <div class="content">
                       <ons-toolbar>
                           <div class="left"><ons-back-button onclick="regresar()">Salir</ons-back-button></div>
