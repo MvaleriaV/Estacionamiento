@@ -5,6 +5,7 @@
         <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
         <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
         <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+        <script src="phonegap.js"></script>
         <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
         <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
         <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.2/mapbox-gl.js'></script>
@@ -149,8 +150,8 @@
                 ons.notification.alert("Te faltan algunos datos");
                 return;
               }
-              if(tel < 1000000000 || tel >= 9999999999){
-                ons.notification.alert("telefono invalido");
+              if(tel.lenght != 10 || plac.lenght > 10){
+                ons.notification.alert("telefono o placas invalidos");
                 return;
               }
               else{
@@ -208,13 +209,8 @@
                         localStorage.setItem('usuario', nombre);
                         localStorage.setItem('placas', regPlac);
                         localStorage.setItem('telefono', regTel);
-
-
                         //ons.notification.alert(localStorage.getItem("usuario"));
-
-
                         ons.notification.alert("Registro exitoso");
-
                         //document.querySelector('#myNavigator').pushPage('maps.html');
                         document.getElementById('registro_coche').hide();
                         document.querySelector('#myNavigator').pushPage('mapa.html');
@@ -364,7 +360,6 @@
                           var uso = localStorage.getItem("usuario");
                           //ons.notificación.alert(uso);
                           //console.log(uso);
-
                           document.getElementById("actual").innerHTML = uso;
                       </script>
                       <style>
@@ -373,9 +368,7 @@
                            width: 100%;  /* The width is the width of the web page */
                           }
                       </style>
-
                       <div id = "map" class = "center" ></div>
-
                       <ons-card class="blue"> <center><ons-button id="gps" modifier="large--quiet" onclick="gpsAlta()" style="color: white">Marcar Lugar/ Borrar</ons-button> </center> </ons-card>
                       <script>
                           function gps_delete(placas){
@@ -445,7 +438,6 @@
                                           document.getElementById('map'), {zoom: 18, center: uluru});
                               fillMap();
                           }
-
                           function fillMap(){
                               var xhttp = new XMLHttpRequest();
                               xhttp.onreadystatechange = function(){
