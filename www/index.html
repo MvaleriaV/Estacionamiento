@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+        <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
+        <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+        <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+        <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+        <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.2/mapbox-gl.js'></script>
+        <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.2/mapbox-gl.css' rel='stylesheet' />
+        <script>
+            var x;
+            var y;
+            var arregloT;
+            var nombre;
+            var codigo;
+            var codiguito;
+            var regTel = ""; var regPlac = "";
+            var nomb = "";var tel = "";var cod= ""; var plac = ""; var pass = "";
+
+            var lugares = [];
+            function lugares_e(){
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function(){
+                    if(xhttp.readyState == 4 && this.status == 200) {
+                        var cadena = xhttp.responseText;
+                        if(cadena != 1){
+                            var json = JSON.parse(cadena);
+                            json.forEach(element => {
+                                var parse = JSON.parse(element);
+                                lugares.push(parse);
+                            });
+                          }
+
+
+                    }
+                };
+                xhttp.open("GET", "https://estewebsite.000webhostapp.com/parking_spot.php", true);
+                xhttp.send();
+            }
+            lugares_e();
+
+            window.onload=function(){
+                setTimeout(function(){
+                    document.getElementById('splash').style.display= "block";
+
+                    if (localStorage.getItem('usuario') == null) {
+                        document.querySelector('#myNavigator').pushPage('log.html');//Login
+                    } else {
+                        document.querySelector('#myNavigator').pushPage('mapa.html');//Mapa
+                    }
+                },3500)///tiempo
+            }
+
+            function log ()///identificar usuario
+            {
+              x = document.getElementById("v1").value;
+              y = document.getElementById("v2").value;
+              //ons.notification.alert(x + " " + y);
+              var xhttp = new XMLHttpRequest();
+              xhttp.onreadystatechange = function(){
+                  if (this.readyState == 4 && this.status == 200) {
+                      //ons.notification.alert(this.responseText + "Datos udg");
+                      var cadena = this.responseText;
+                        arregloT = cadena.split(',');
+                        if(arregloT[0] == 'A')
+                        {/// existe en la BD de udg
+                          codigo = arregloT[1];
+                          nombre = arregloT[2];
+                          //ons.notification.alert(codigo + nombre);
+
+                          var xhttpLog = new XMLHttpRequest();
+                          xhttpLog.onreadystatechange = function(){
+                            if(xhttpLog.readyState == 4 && this.status == 200){
+                              var cadenaLog = xhttpLog.responseText;
+
+                              //ons.notification.alert(cadenaLog + " no existe en estacionamientoUDG");
+                              if(cadenaLog != 0){
+
+                                 var parseJson = JSON.parse(cadenaLog);
+                                 localStorage.setItem('codigo', parseJson.codigo);
+                                 localStorage.setItem('usuario', parseJson.nombre);
+                                 localStorage.setItem('placas', parseJson.placas);
+                                 localStorage.setItem('telefono', parseJson.telefono);
+                                 //console.log(localStorage.getItem('usuario'));
+                                 document.querySelector('#myNavigator').pushPage('mapa.html');
+                              }
+                              else{/// no exixte usuario en la BD del estacionamientoUDG
+                                var dialog = document.getElementById('registro_coche');
+                                if (dialog) {
+                                    dialog.show();
+                                } else {
+                                    ons.createElement('alert-dialog.html', { append: true })
+                                    .then(function(dialog) {
+                                        dialog.show();/// registro de placas
+                                    });
+                                }
+                              }// cierre no existe en la BD
+                            }/// cierre onreadystatechange
+                          };///cierre de la consulta
+                          xhttpLog.open("GET", "https://estewebsite.000webhostapp.com/LogUdG.php?codigo="+ codigo + "&nombre=" + nombre, true);
+                          xhttpLog.send();
+                        }///cierre a arreglo T
+                        else{/// no existe en la BD de UdG
+                          var xhttpLoginNoUDG = new XMLHttpRequest();
+                            xhttpLoginNoUDG.onreadystatechange = function(){
+                                if(xhttpLoginNoUDG.readyState == 4 && this.status == 200){
+                                    var cadena = xhttpLoginNoUDG.responseText;
+                                    if(cadena != 0){/// existe en BD externa
+
+                                        var parseJson = JSON.parse(cadena);
+                                        localStorage.setItem('codigo', parseJson.codigo);
+                                        localStorage.setItem('usuario', parseJson.nombre);
+                                        localStorage.setItem('placas', parseJson.placas);
+                                        localStorage.setItem('telefono', parseJson.telefono);
+
+                                        document.querySelector('#myNavigator').pushPage('mapa.html');
+                                    }
+                                    else{//no existe en la BD externa
+                                        ///document.querySelector('#myNavigator').pushPage('nuevo.html');
+                                        nuevoUsuario();
+                                        }
+
+                                    }
+                                };
+                                xhttpLoginNoUDG.open("GET", "https://estewebsite.000webhostapp.com/LogInNoUdG.php?codigo="+ x + "&nip=" + y, true);
+                                xhttpLoginNoUDG.send();
+                        }
+                    //cierre de else existencia del alumno
+                  }
+              };
+              xhttp.open("GET", "http://dcc.000webhostapp.com/2018/datosudeg.php?codigo="+x+"&nip="+y, true);
+              xhttp.send();
+            }
+            function deAlta()
+            {
+              cod = document.getElementById("inn-codigo").value;
+              cod = codiguito.toString();
+              nomb = document.getElementById("inn-nombre").value;
+              plac = document.getElementById("inn-placas").value;
+              tel = document.getElementById("inn-telefono").value;
+              pass = document.getElementById("inn-password").value;
+
+              if(tel < 1000000000 || tel >= 9999999999){
+                ons.notification.alert("telefono invalido");
+                return;
+              }
+              if(pass == "" || nomb == "" || cod == "" || plac == "" || tel == "" || tel.lenght < 10 || cod == "undefined")
+              {
+                ons.notification.alert("Error de entrada");
+              }else{
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function(){
+                if(xhttp.readyState == 4 && this.status == 200){
+                    var cadena = xhttp.responseText;
+                    console.log(cadena);
+                    var array = cadena.split(',');
+                    if(array[0] == 1){
+                        nombre = nomb;
+                        ons.notification.alert("Registro exitoso");
+                        //ons.notification.alert(""+ cod + " " + nomb+ " " + pass);
+                        localStorage.setItem('codigo', codigo);
+                        localStorage.setItem('usuario', nombre);
+                        localStorage.setItem('placas', plac);
+                        localStorage.setItem('telefono', tel);
+                        document.querySelector('#myNavigator').pushPage('mapa.html');
+
+                    }
+                    else {
+                        ons.notification.alert("ERROR");
+                    }
+                }
+                };
+                xhttp.open("GET", "http://cuceimobile.tech/Escuela/altaU.php?codigo="+ cod + "&nombre=" + nomb + "&placas=" + plac +"&telefono=" + tel + "&password=" + pass, true);
+                xhttp.send();
+              }
+            }
+            function registro ()//Ingreso de solo las placas y telefono
+            {
+              regTel = document.getElementById("inn_t").value;
+              regPlac = document.getElementById("inn_p").value;
+
+              if(regTel < 1000000000 || regTel >= 9999999999){
+                ons.notification.alert("telefono invalido");
+                return;
+              }
+              if(regTel == "" || regPlac == "")
+              {
+                ons.notification.alert("Error de entrada, llene todos los campos");
+              }
+              else{
+                var rand_pass= "&password=" + Math.floor(Math.random() * 10);
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function(){
+                if(xhttp.readyState == 4 && this.status == 200){
+                    var cadena = xhttp.responseText;
+                    console.log(cadena);
+                    var array = cadena.split(',');
+                    if(array[0] == 1){
+                        nombre = nomb;
+
+                        localStorage.setItem('codigo', codigo);
+                        localStorage.setItem('usuario', nombre);
+                        localStorage.setItem('placas', regPlac);
+                        localStorage.setItem('telefono', regTel);
+
+
+                        //ons.notification.alert(localStorage.getItem("usuario"));
+
+
+                        ons.notification.alert("Registro exitoso");
+
+                        //document.querySelector('#myNavigator').pushPage('maps.html');
+                        document.getElementById('registro_coche').hide();
+                        document.querySelector('#myNavigator').pushPage('mapa.html');
+                    }
+                    else {
+                        ons.notification.alert("ERROR");
+                    }
+                }
+                };
+                xhttp.open("GET", "http://cuceimobile.tech/Escuela/altaU.php?codigo="+ codigo + "&nombre=" + nombre + "&placas=" + regPlac +"&telefono=" + regTel + rand_pass , true);
+                xhttp.send();
+              }
+            }
+            function regresar()
+            {
+              localStorage.clear();
+              location.reload();
+              //document.querySelector('#myNavigator').pushPage('log.html');//Login
+            }
+            function nuevoUsuario()
+            {
+              var min = Math.ceil(1000);
+              var max = Math.floor(5000);
+              codiguito = Math.floor(Math.random() * (max - min + 1)) + min;
+              document.querySelector('#myNavigator').pushPage('nuevo.html')
+            }
+
+        </script>
+        <style>
+          .blue{
+            background-color: darkCyan;
+          }
+        </style>
+    </head>
+    <body>
+        <ons-navigator swipeable id="myNavigator" page="splash.html" animation="slide" ></ons-navigator>
+        <template id="splash.html" >
+            <ons-page id="splash" >
+              <div class="background" style="background-color:white;"></div>
+                <br><br><br><br>
+                <center>
+                <img src="https://healthcarevalet.com/wp-content/uploads/2018/12/Cars-NoCrop-Animated-450px.gif" height="190" width="280"/>
+                <br>
+                <h1><i>Parking CUCEI</i></h1>
+                </center>
+            </ons-page>
+        </template>
+
+        <template id="log.html">
+            <ons-page id="log" >
+              <div class="background" style="background-color:white;"></div>
+              <ons-toolbar>
+                  <div class="center" >Login</div>
+              </ons-toolbar>
+              <p>
+              <center>
+                <h1>Parking CUCEI</h1>
+                <img src="https://healthcarevalet.com/wp-content/uploads/2018/12/Cars-NoCrop-Animated-450px.gif" height="190" width="280"><br><br>
+                <ons-card>
+                  <center>
+                    <ons-input input-id="v1" type="number" placeholder="CODIGO"></ons-input><br><br>
+                    <ons-input input-id="v2" type="password" placeholder="NIP"></ons-input><br><br>
+                  </center>
+                </ons-card>
+              </center>
+              </p>
+              <ons-card>
+                <center><ons-button modifier="large" id="push-button" onclick="log()" style="background-color: darkCyan; color: white">Enviar</ons-button></center><br>
+                <center><label id="nuevo-label" onclick="nuevoUsuario()">Nuevo Usuario</label></center>
+              </ons-card>
+            </ons-page>
+        </template>
+
+        <template id="nuevo.html">
+          <ons-page id="nuevo">
+            <ons-toolbar>
+              <div class="left"><ons-back-button>Login</ons-back-button></div>
+              <div class="center"></div>
+            </ons-toolbar>
+            <p>
+              <center>
+                <br><br>
+                <p>
+                  <font face= "verdana">Codigo generado:</font><br>
+
+                  <label id="inn-codigo" placeholder="Código" type="text" modifier="underbar" float></label><br><br>
+                  <script>
+                    document.getElementById("inn-codigo").innerHTML = this.codiguito.toString();
+                  </script>
+                </p>
+                <ons-card>
+                  <center>
+                    <p>
+                      <font face= "verdana">Nombre:</font><br>
+                      <ons-input id="inn-nombre" type="text" placeholder="Nombre" modifier="underbar" float></ons-input>
+                    </p>
+                    <p>
+                      <font face= "verdana">Placas: </font><br>
+                      <ons-input id="inn-placas" type="text" placeholder="Placas" modifier="underbar"></ons-input><br>
+                    </p>
+                    <p>
+                      <font face= "verdana">Telefono: </font><br>
+                      <ons-input id="inn-telefono" type="number" placeholder="Teléfono" modifier="underbar"  onkeypress=" return event.charCode >= 48 && event.charCode <=57" ></ons-input><br>
+                    </p>
+                    <p>
+                      <font face= "verdana">Password: </font><br>
+                      <ons-input id="inn-password" type="password" placeholder="Password" modifier="underbar"></ons-input>
+                    </p>
+                    <ons-button id="alta-button" modifier="large" style="background-color: darkCyan; color: white" onclick="deAlta()">Alta</ons-button>
+                  </center>
+                </ons-card>
+              </center>
+            </p>
+          </ons-page>
+        </template>
+
+        <template id="alert-dialog.html">
+            <ons-alert-dialog id="registro_coche" modifier="rowfooter" cancelable >
+                <div class="alert-dialog-content">
+                  <center>Bienvenid@ <br><i><label id="tu"></label></i></center>
+                  <script>
+                      document.getElementById("tu").innerHTML = nombre;
+                  </script>
+                  <br>
+                  <ons-input input-id="inn_p" placeholder="Placas" type="text" modifier="underbar"></ons-input><br><br>
+                  <ons-input input-id="inn_t" placeholder="Teléfono" type="number" modifier="underbar"  onkeypress=" return event.charCode >= 48 && event.charCode <=57"></ons-input>
+                </div>
+                <div class="alert-dialog-footer">
+                    <ons-alert-dialog-button onclick="registro()" style="background-color: darkCyan; color: white">Alta</ons-alert-dialog-button>
+                </div>
+            </ons-alert-dialog>
+        </template>
+
+        <template id="mapa.html">
+            <ons-page id="page3">
+
+                  <div class="content">
+                      <ons-toolbar>
+                          <div class="left"><ons-back-button onclick="regresar()">Salir</ons-back-button></div>
+                      </ons-toolbar>
+                      <ons-card class = "blue" style="margin-top: 1.5cm;">
+                          <center><font color="white">Bienvenid@ al estacionamiento</font>
+
+                            <br><i><label id="actual" style="color: white;"></label></i>
+                          </center>
+                      </ons-card>
+                      <script>
+                          var uso = localStorage.getItem("usuario");
+                          //ons.notificación.alert(uso);
+                          //console.log(uso);
+
+                          document.getElementById("actual").innerHTML = uso;
+                      </script>
+                      <style>
+                         #map {
+                           height: 65%;  /* The height is < 400 pixels */
+                           width: 100%;  /* The width is the width of the web page */
+                          }
+                      </style>
+
+                      <div id = "map" class = "center" ></div>
+
+                      <ons-card class="blue"> <center><ons-button id="gps" modifier="large--quiet" onclick="gpsAlta()" style="color: white">Marcar Lugar/ Borrar</ons-button> </center> </ons-card>
+                      <script>
+                          function gps_delete(placas){
+                              var xhttp = new XMLHttpRequest();
+                              var url = "https://lumartch.000webhostapp.com/estacionamientoUDG/delete_gps.php?placas=" + placas;
+                              url = encodeURI(url);
+                              xhttp.onreadystatechange = function(){
+                                  if(xhttp.readyState == 4 && this.status == 200) {
+                                      var r = xhttp.responseText;
+                                      if(r == 1){
+                                          alert("Desocupando lugar");
+                                          initMap();
+                                      }
+                                      else{
+                                          alert("Error");
+                                      }
+                                  }
+                              };
+                              xhttp.open("GET", url, true);
+                              xhttp.send();
+                          }
+                          function gps_insert(placas, la, lo){
+                              var xhttp = new XMLHttpRequest();
+                              var url = "https://lumartch.000webhostapp.com/estacionamientoUDG/insert_gps.php?placas=" + placas + "&lat=" + la + "&lon=" + lo;
+                              xhttp.onreadystatechange = function(){
+                                  if(xhttp.readyState == 4 && this.status == 200) {
+                                      var r = xhttp.responseText;
+                                      if(r == 1){
+                                          alert("¡Lugar marcado!");
+                                          initMap();
+                                      }
+                                      else if(r == 2){
+                                          alert("Lugar ocupado.");
+                                      }
+                                      else {
+                                          gps_delete(placas);
+                                      }
+                                  }
+                              };
+                              xhttp.open("GET", url, true);
+                              xhttp.send();
+                          }
+                          // onSuccess Geolocation
+                          function onSuccess(position){
+                              var p = localStorage.getItem('placas');
+                              var la = position.coords.latitude;
+                              var lo = position.coords.longitude;
+                              gps_insert(p, la, lo);
+                          }
+                          // onError Callback receives a PositionError object
+                          function onError(error) {
+                              alert('code: '    + error.code    + '\n' +
+                                      'message: ' + error.message + '\n');
+                          }
+                          // Función para actualizar la posición actual del
+                          function gpsAlta() {
+                              lugares = [];
+                              //ons.notification.alert("Estamos localizando su vehiculo con GPS... Espere la notificación de alta.");
+                              navigator.geolocation.getCurrentPosition(onSuccess, onError);
+                          }
+                          // Construcción del mapa
+                          var map;
+                          var marker;
+                          function initMap() {
+                              var uluru = { lat: 20.6540263, lng: -103.3246417 };
+                              map = new google.maps.Map(
+                                          document.getElementById('map'), {zoom: 18, center: uluru});
+                              fillMap();
+                          }
+
+                          function fillMap(){
+                              var xhttp = new XMLHttpRequest();
+                              xhttp.onreadystatechange = function(){
+                                  if(xhttp.readyState == 4 && this.status == 200) {
+                                      var cadena = xhttp.responseText;
+                                      if(cadena != 1){
+                                          var json = JSON.parse(cadena);
+                                          json.forEach(element => {
+                                              var parse = JSON.parse(element);
+                                              var uluru = {lat: parseFloat(parse.lat), lng: parseFloat(parse.lon)};
+                                              placeMarker(uluru, parse.placas);
+                                          });
+                                      }
+                                  }
+                              };
+                              xhttp.open("GET", "https://lumartch.000webhostapp.com/estacionamientoUDG/parking_spot.php", true);
+                              xhttp.send();
+                          }
+                          function placeMarker(location, info) {
+                              marker = new google.maps.Marker({
+                                  position: location,
+                                  label: {
+                                      text: info,
+                                      color: "black",
+                                      fontWeight: "bold",
+                                      fontSize: "16px"
+                                  },
+                                  map: map,
+                                  animation: google.maps.Animation.DROP
+                              });
+                          }
+                      </script>
+                      <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCC7gcQiURQB7SNfLf0T_4Awr_RKD3Qe-o&callback=initMap"></script>
+                  </div>
+            </ons-page>
+        </template>
+        <script type="text/javascript" src="cordova.js"></script>
+    </body>
+</html>
